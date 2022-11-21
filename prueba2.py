@@ -114,7 +114,7 @@ def get_total(subtotal, discount, IVA):
     return total
 
 
-def get_client_data(partidos, clientes):
+def get_client_data(partidos, clientes, tickets_ocupados):
     nombre_cliente = input("Porfavor ingrese su nombre completo \n --> ") 
     while not nombre_cliente.isalpha or nombre_cliente.count(" ") > 4:
         nombre_cliente = input("Porfavor ingrese un nombre valido. Ingrese su nombre completo \n --> ")
@@ -141,23 +141,25 @@ def get_client_data(partidos, clientes):
                 for partido in partidos:
                     if partido.id == id_partido:
                         estadio_selected = partido.stadium_id
-                        get_mapa_estadio(estadio_selected.capacidad, tickets_comprados, partido_cliente)
+                        asientos_libre = get_mapa_estadio(estadio_selected.capacidad, tickets_ocupados, partido_cliente)
                     
                 id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
-                while not id_asiento.isnumeric():
-                    id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
+                while not id_asiento.isnumeric() or not id_asiento in asientos_libre:
+                    id_asiento = input("Porfavor ingrese un asiento libre y disponible. Ingrese nuevamente el asiento que desea comprar \n --> ")
+
+                ticket_code = (f"{partido_cliente.home_team.codigo_fifa}-{partido_cliente.away_team.codigo_fifa}-{id_partido}{id_asiento}")    
                 
                 if option_ticket_cliente == "1":
-                    ticket = General(partido_cliente, id_asiento)
+                    ticket = General(partido_cliente, id_asiento, ticket_code)
                 else:
-                    ticket = Vip(partido_cliente, id_asiento)
+                    ticket = Vip(partido_cliente, id_asiento, ticket_code)
                 
                 subtotal = ticket.precio
-                descuento = get_discount(cedula_cliente, ticket)
+                descuento = get_discount(cliente.cedula, ticket)
                 IVA = get_IVA(ticket)
                 total = get_total(subtotal, descuento, IVA)
 
-                factura = Factura(nombre_cliente, cedula_cliente, edad_cliente, ticket, subtotal, descuento, IVA, total)
+                factura = Factura(cliente.nombre, cliente.cedula, cliente.edad, ticket, subtotal, descuento, IVA, total)
                 factura.show()
                 final_option = input("Desea continuar con su pago y generar el ticket? \n 1. SI \n 2. NO \n --> ")
                 while not final_option.isnumeric() or not int(final_option) in range(1, 3):
@@ -167,10 +169,15 @@ def get_client_data(partidos, clientes):
                     print(Style.RESET_ALL)
                     cliente.tickets_comprados.append(ticket)
                     cliente.partidos_comprados.append(partido_cliente)
-                    return ticket
+                    cliente.facturas.append(factura)
+                    cliente = None
+                    return cliente, ticket
                 else:
                     print(f"{Fore.RED} Se ha cancelado su compra") 
                     print(Style.RESET_ALL)
+                    cliente = None
+                    ticket = None
+                    return cliente, ticket
             else:
                 cedula_cliente = input("Porfavor ingrese su cedula de identidad \n --> ")
                 while not cedula_cliente.isnumeric():
@@ -200,23 +207,27 @@ def get_client_data(partidos, clientes):
                 for partido in partidos:
                     if partido.id == id_partido:
                         estadio_selected = partido.stadium_id
-                        get_mapa_estadio(estadio_selected.capacidad, tickets_comprados, partido_cliente)
+                        asientos_libre = get_mapa_estadio(estadio_selected.capacidad, tickets_ocupados, partido_cliente)
+                        break
                         
                 id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
-                while not id_asiento.isnumeric():
-                    id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
+                while not id_asiento.isnumeric() or not id_asiento in asientos_libre:
+                    id_asiento = input("Porfavor ingrese un asiento libre y disponible. Ingrese nuevamente el asiento que desea comprar \n --> ")
+                
+                ticket_code = (f"{partido_cliente.home_team.codigo_fifa}-{partido_cliente.away_team.codigo_fifa}-{id_partido}{id_asiento}")
                 
                 tickets_comprados = []
                 if option_ticket_cliente == "1":
-                    ticket = General(partido_cliente, id_asiento)
+                    ticket = General(partido_cliente, id_asiento, ticket_code)
                 else:
-                    ticket = Vip(partido_cliente, id_asiento)
+                    ticket = Vip(partido_cliente, id_asiento, ticket_code)
 
                 subtotal = ticket.precio
                 descuento = get_discount(cedula_cliente, ticket)
                 IVA = get_IVA(ticket)
                 total = get_total(subtotal, descuento, IVA)
 
+                facturas = []
                 factura = Factura(nombre_cliente, cedula_cliente, edad_cliente, ticket, subtotal, descuento, IVA, total)
                 factura.show()
                 final_option = input("Desea continuar con su pago y generar el ticket? \n 1. SI \n 2. NO \n --> ")
@@ -227,11 +238,15 @@ def get_client_data(partidos, clientes):
                     print(Style.RESET_ALL)
                     tickets_comprados.append(ticket)
                     partidos_comprados.append(partido_cliente)
-                    cliente = Cliente(nombre_cliente, cedula_cliente, edad_cliente, partidos_comprados, tickets_comprados)
+                    facturas.append(factura)
+                    cliente = Cliente(nombre_cliente, cedula_cliente, edad_cliente, partidos_comprados, tickets_comprados, facturas)
                     return cliente, ticket
                 else:
                     print(f"{Fore.RED} Se ha cancelado su compra") 
                     print(Style.RESET_ALL)
+                    cliente = None
+                    ticket = None
+                    return cliente, ticket
     else:
         cedula_cliente = input("Porfavor ingrese su cedula de identidad \n --> ")
         while not cedula_cliente.isnumeric():
@@ -261,23 +276,27 @@ def get_client_data(partidos, clientes):
         for partido in partidos:
             if partido.id == id_partido:
                 estadio_selected = partido.stadium_id
-                get_mapa_estadio(estadio_selected.capacidad, tickets_ocupados, partido_cliente)
+                asientos_libre = get_mapa_estadio(estadio_selected.capacidad, tickets_ocupados, partido_cliente)
+                break
                 
         id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
-        while not id_asiento.isnumeric():
-            id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
+        while not id_asiento.isnumeric() or not id_asiento in asientos_libre:
+            id_asiento = input("Porfavor ingrese un asiento libre. Ingrese nuevamente el asiento que desea comprar \n --> ")
+        
+        ticket_code = (f"{partido_cliente.home_team.codigo_fifa}-{partido_cliente.away_team.codigo_fifa}-{id_partido}{id_asiento}")
         
         tickets_comprados = []
         if option_ticket_cliente == "1":
-            ticket = General(partido_cliente, id_asiento)
+            ticket = General(partido_cliente, id_asiento, ticket_code)
         else:
-            ticket = Vip(partido_cliente, id_asiento)
+            ticket = Vip(partido_cliente, id_asiento, ticket_code)
 
         subtotal = ticket.precio
         descuento = get_discount(cedula_cliente, ticket)
         IVA = get_IVA(ticket)
         total = get_total(subtotal, descuento, IVA)
 
+        facturas = []
         factura = Factura(nombre_cliente, cedula_cliente, edad_cliente, ticket, subtotal, descuento, IVA, total)
         factura.show()
         final_option = input("Desea continuar con su pago y generar el ticket? \n 1. SI \n 2. NO \n --> ")
@@ -288,7 +307,8 @@ def get_client_data(partidos, clientes):
             print(Style.RESET_ALL)
             tickets_comprados.append(ticket)
             partidos_comprados.append(partido_cliente)
-            cliente = Cliente(nombre_cliente, cedula_cliente, edad_cliente, partidos_comprados, tickets_comprados)
+            facturas.append(factura)
+            cliente = Cliente(nombre_cliente, cedula_cliente, edad_cliente, partidos_comprados, tickets_comprados, facturas)
             return cliente, ticket
         else:
             print(f"{Fore.RED} Se ha cancelado su compra") 
@@ -296,12 +316,6 @@ def get_client_data(partidos, clientes):
             cliente = None
             ticket = None
             return cliente, ticket
-
-tickets_ocupados = []
-clientes = []
-cliente, ticket = get_client_data(partidos, clientes)   
-clientes.append(cliente)
-tickets_ocupados.append(ticket)
 
 
 

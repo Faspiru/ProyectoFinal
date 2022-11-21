@@ -1,23 +1,30 @@
-from itertools import permutations
+from colorama import *
 
-cedula = "6880"
-division = len(cedula)//2
-print(division)
+def get_mapa_estadio(x, tickets_ocupados, partido_cliente):
+    taken = []
+    for ticket in tickets_ocupados:
+        if ticket.partido_cliente == partido_cliente:
+            taken.append(ticket.id_asiento)
 
-def is_numero_vampiro(cedula):
-    cont = 0
-    for permutaciones in permutations(cedula):
-        digitos_separados = "".join(permutaciones)
-        primera_parte = digitos_separados[:int(len(digitos_separados)//2)]
-        segunda_parte = digitos_separados[int(len(digitos_separados)//2):]
-        primera_parte = int(primera_parte)
-        segunda_parte = int(segunda_parte)
-        if primera_parte * segunda_parte == int(cedula):
-            cont+=1
-    if cont != 0:
-        return True
-    else:
-        return False
+    asientos_libres = []
+    for a in range(x[0]):
+        fila = []
+        for b in range(x[1]):
+            if f"{a}{b}" not in taken:
+                changed_color = (f"{Fore.GREEN} {a}{b}")
+                fila.append(changed_color)
+                asientos_libres.append(f"{a}{b}")
+            else:
+                changed_color = (f"{Fore.RED} X ")
+                fila.append(changed_color)       
+        print(" ".join(fila))
+        print()
+    print(Style.RESET_ALL)
+    return asientos_libres
 
-boolean = is_numero_vampiro(cedula)
-print(boolean)
+get_mapa_estadio([3, 3], [], )
+
+        
+    
+    
+            

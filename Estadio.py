@@ -15,3 +15,9 @@ class Estadio():
         print()
         for restaurante in self.restaurantes:
             restaurante.show()
+    
+    def show_without_restaurant(self):
+        print(f"-----{self.nombre}-----")
+        print(f"Id -> {self.id}")
+        print(f"Capacidad -> {self.capacidad}")
+        print(f"Location -> {self.location}")
