@@ -8,8 +8,7 @@ from Restaurante import Restaurante
 from Partido import Partido
 from Ticket import General, Vip
 from Cliente import Cliente
-from Factura import Factura
-
+from Factura import FacturaTicket, FacturaRestaurante
 
 ## Con el siguiente codigo se busca transferir la estructura de datos proporcionada en la api, a nuestro programa para poder utilizarla
 def get_equipos():
@@ -40,10 +39,10 @@ def get_estadios():
                             productos = []
                             for products_dict in valueR:
                                 if products_dict.get("type") == "beverages":
-                                    bebida = Bebida(products_dict.get("name"), products_dict.get("price"))
+                                    bebida = Bebida(products_dict.get("name"), products_dict.get("price"), products_dict.get("adicional"))
                                     productos.append(bebida)
                                 elif products_dict.get("type") == "food":
-                                    alimento = Alimento(products_dict.get("name"), products_dict.get("price"))
+                                    alimento = Alimento(products_dict.get("name"), products_dict.get("price"), products_dict.get("adicional"))
                                     productos.append(alimento)
                     restaurante = Restaurante(restaurantes_dict.get("name"), productos)
                     restaurantes.append(restaurante)
@@ -89,7 +88,7 @@ def get_matches_equipos(partidos):
             filtro_partidos_pais.append(partido)
             aux = True
     if aux == False:
-        if pais == "Italia":
+        if pais == "Italia" or pais == "Italy":
             print()
             print("Tranquilo hermano, todos sabemos que italia es la mejor del mundo, lamentable lo de su ausencia este mundial \U0001F614\N{raised fist}")
             print()
@@ -194,7 +193,12 @@ def get_total(subtotal, discount, IVA):
     return total
 
 ## La siguiente funcion recolecta datos del cliente
-def get_client_data(partidos, tickets_ocupados):
+def get_client_data(partidos, tickets_ocupados, clientes):
+    lista_cedulas_registradas = []
+    if clientes != []:
+        for cliente in clientes:
+            lista_cedulas_registradas.append(cliente.cedula)
+
     nombre_cliente = input("Porfavor ingrese su nombre completo \n --> ").title()
     cliente_list = nombre_cliente.split(" ")
     nombre_junto = "".join(cliente_list)
@@ -204,12 +208,12 @@ def get_client_data(partidos, tickets_ocupados):
         nombre_junto = "".join(cliente_list)
 
     cedula_cliente = input("Porfavor ingrese su cedula de identidad \n --> ")
-    while not cedula_cliente.isnumeric():
-        cedula_cliente = input("Porfavor ingrese una cedula valida. Ingrese su cedula de identidad \n --> ")
+    while not cedula_cliente.isnumeric() or int(cedula_cliente) in lista_cedulas_registradas:
+        cedula_cliente = input("Porfavor ingrese una cedula valida y que no haya sido registrada. Ingrese su cedula de identidad \n --> ")
     cedula_cliente = int(cedula_cliente)
     
     edad_cliente = input("Porfavor ingrese su edad \n --> ")
-    while not int(edad_cliente) in range(1, 105):
+    while not edad_cliente.isnumeric() or not int(edad_cliente) in range(1, 119):
         edad_cliente = input("Porfavor ingrese una edad valida. Ingrese su edad \n --> ")
     edad_cliente = int(edad_cliente)
 
@@ -262,8 +266,8 @@ def get_client_data(partidos, tickets_ocupados):
             descuento = get_discount(cedula_cliente, subtotal, IVA)
             total = get_total(subtotal, descuento, IVA)
 
-            factura = Factura(nombre_cliente, cedula_cliente, edad_cliente, tickets_comprados, subtotal, descuento, IVA, total)
-            factura.show()
+            factura_ticket = FacturaTicket(nombre_cliente, cedula_cliente, edad_cliente, tickets_comprados, subtotal, descuento, IVA, total)
+            factura_ticket.show()
 
             final_option = input("Desea continuar con su pago y generar el ticket? \n 1. SI \n 2. NO \n --> ")
             while not final_option.isnumeric() or not int(final_option) in range(1, 3):
@@ -271,7 +275,7 @@ def get_client_data(partidos, tickets_ocupados):
             if final_option == "1":
                 print(f"{Fore.GREEN} Compra realizada exitosamente")
                 print(Style.RESET_ALL)
-                cliente = Cliente(nombre_cliente, cedula_cliente, edad_cliente, partidos_comprados, tickets_comprados, factura)
+                cliente = Cliente(nombre_cliente, cedula_cliente, edad_cliente, partidos_comprados, tickets_comprados, factura_ticket)
                 return cliente
             else:
                 for ticket_in_for in tickets_comprados:
@@ -380,6 +384,7 @@ def get_restaurantes_segun_estadio(estadios):
     id_estadio_option = int(id_estadio_option)
     
     lista_nombres_restaurantes_for_validation = []
+    lista_productos_for_validation = []
     for estadio in estadios:
         if estadio.id == id_estadio_option:
             for restaurante in estadio.restaurantes:
@@ -398,32 +403,36 @@ def get_restaurantes_segun_estadio(estadios):
                     suboption = input("Como desearia ver el menu? \n 1. Completo \n 2. Por nombre \n 3. Por tipo \n 4. Por rango de precios \n --> ")
                     while not suboption.isnumeric() or not int(suboption) in range(1, 5):
                         suboption = input("Ingreso Invalido. Como desearia ver el menu? \n 1. Completo \n 2. Por nombre \n 3. Por tipo \n 4. Por rango de precios \n --> ")
-    
+
+                    for producto in restaurante.productos:
+                        lista_productos_for_validation.append(producto.nombre)
+
                     if suboption == "1":
                         print()
                         print("\U0001F377 --MENU-- \U0001F377")
                         print()
                         for producto in restaurante.productos:
                             producto.show() 
+                            lista_productos_for_validation.append(producto.nombre)
                             print()  
                     if suboption == "2":
                         nombre_option = input("Ingrese el nombre del alimento o bebida que desea comprar \n --> ")
                         nombre_list = nombre_option.split(" ")
                         nombre_junto = "".join(nombre_list)
-                        while not nombre_junto.isalpha():
+                        while not nombre_junto.isalpha() or not nombre_junto in lista_productos_for_validation:
                             nombre_option = input("Lo sentimos, no se ha podido encontrar el alimento anterior, porfavor ingrese un alimento del menu \n --> ")
                             nombre_list = nombre_option.split(" ")
                             nombre_junto = "".join(nombre_list)
                         print()
                         print("\U0001F377 --MENU-- \U0001F377")
                         print()
-                        aux = False
+                        aux2 = False
                         for producto in restaurante.productos:
                             if producto.nombre == nombre_option:
-                                aux = True
+                                aux2 = True
                                 producto.show()
                                 print()
-                        if aux == False:
+                        if aux2 == False:
                             print()
                             print("No se ha encontrado el alimento seleccionado en el menu. Intente nuevamente")
                     if suboption == "3":
@@ -437,10 +446,14 @@ def get_restaurantes_segun_estadio(estadios):
                         print()
                         print("\U0001F377 --MENU-- \U0001F377")
                         print()
+                        aux3 = False
                         for producto in restaurante.productos:
                             if producto.type == tipo_option_nombre:
+                                aux3 = True
                                 producto.show()
                                 print()
+                        if aux3 == False:
+                            print("No se ha encontrado el alimento seleccionado en el menu. Intente nuevamente")
                     if suboption == "4":
                         limite_menor = input("Ingrese el limite menor del rango de precios que desea filtrar (numero entero) \n --> ")
                         while not limite_menor.isnumeric() and int(limite_menor) < 35:
@@ -449,15 +462,152 @@ def get_restaurantes_segun_estadio(estadios):
                         while not limite_mayor.isnumeric():
                             limite_menor = input("Porfavor ingrese un limite mayor valido. Ingrese el limite menor del rango de precios que desea filtrar (numero entero) \n --> ")
                         limite_menor = int(limite_menor)
-                        limite_mayor = int(limite_mayor) + 1
+                        limite_mayor = int(limite_mayor) 
                         print()
                         print("\U0001F377 --MENU-- \U0001F377")
                         print()
+                        aux4 = False
                         for producto in restaurante.productos:
                             if producto.total <= limite_mayor and producto.total >= limite_menor:
+                                aux4 = True
                                 producto.show()
                                 print()
+                        if aux4 == False:
+                            print("No se ha encontrado el alimento seleccionado en el menu. Intente nuevamente")
 
+## A continuacion se encuentra la funcion para detectar si un cliente tiene acceso al restaurante, y que desea comprar
+def get_factura_productos(clientes):
+    tickets_VIP_detectados = []
+    #lista_id_partidos_for_validation = []
+    #lista_nombre_productos = []
+    #carrito_dict = {}
+    #cuenta_productos = []
+    #cuenta_dict = []
+    cedula = input("Porfavor ingrese la cedula registrada en el sistema al comprar los tickets \n --> ")
+    while not cedula.isnumeric():
+        cedula = input("Ingreso Invalido. Porfavor ingrese la cedula registrada en el sistema al comprar los tickets \n --> ")
+    cedula = int(cedula)
+
+    aux = False
+    for cliente in clientes:
+        if cliente.cedula == cedula:
+            for ticket in cliente.tickets_comprados:
+                if ticket.tipo_entrada == "VIP":
+                    aux = True
+                    if tickets_VIP_detectados == []:    
+                        tickets_VIP_detectados.append(ticket)
+                    else:
+                        for ticketVIP in tickets_VIP_detectados:
+                            if ticketVIP.partido_cliente != ticket.partido_cliente:
+                                tickets_VIP_detectados.append(ticket)
+        if aux == False:
+            print()
+            print("Lo sentimos, usted no tiene acceso al restaurante debido a que ninguna de sus entradas compradas es VIP")
+        if aux == True:
+            while True:
+                lista_id_partidos_for_validation = []
+                lista_nombre_productos = []
+                carrito_dict = {}
+                cuenta_productos = []
+                cuenta_dict = []
+                print()
+                print(f"Usted tiene a su disposicion tickets VIP para {len(tickets_VIP_detectados)} partidos difrentes")
+        
+                option = input("Que desea realizar? \n 1. Registrar compra en un restaurante \n 2. Salir \n --> ")
+                while not option.isnumeric() or not int(option) in range (1, 3):
+                    option = input("Ingreso Invalido. Que desea realizar? \n --> 1. Registrar compra en un restaurante \n 2. Salir \n --> ")
+                if option == "1":
+                    if tickets_VIP_detectados == []:
+                        print()
+                        print("Usted ya no posee acceso para el restaurante de algun partido, debido a que ya realizo las compras disponibles")
+                        print()
+                    else:
+                        for ticketVIP in tickets_VIP_detectados:
+                            lista_id_partidos_for_validation.append(ticketVIP.partido_cliente.id)
+                            ticketVIP.partido_cliente.show()
+                            print()
+                        suboption = input("Ingrese el id del partido que desea realizar alguna compra en su restaurante \n --> ")
+                        while not suboption.isnumeric() or not suboption in lista_id_partidos_for_validation:
+                            suboption = input("Porfavor seleccione uno de sus partidos comprados con ticket VIP para acceder al menu de su restaurante \n --> ")
+                        
+                        for ticketVIP in tickets_VIP_detectados:
+                            if ticketVIP.partido_cliente.id == suboption:
+                                print("--- RESTAURANTES DISPONIBLES ---")
+                                print()
+                                for i, restaurante in enumerate(ticketVIP.partido_cliente.stadium_id.restaurantes):
+                                    print(f"{i+1} -> {restaurante.nombre}")
+                                print()
+                                restaurant_selection = input("Porfavor seleccione el id del restaurante al cual desea acceder \n --> ")
+                                while not restaurant_selection.isnumeric() or not int(restaurant_selection) in range(1, len(ticketVIP.partido_cliente.stadium_id.restaurantes) + 1):
+                                    restaurant_selection = input("Ingreso Invalido. Porfavor seleccione el id del restaurante al cual desea acceder \n --> ")
+                                restaurant_selection = int(restaurant_selection)
+                                restaurante_selected = (ticketVIP.partido_cliente.stadium_id.restaurantes)[restaurant_selection - 1]
+
+                                while True:
+                                    option_para_comprar = input("Que desea realizar? \n 1. Agregar productos a la cuenta \n 2. Salir \n --> ")
+                                    while not option_para_comprar.isnumeric() or not int(option_para_comprar) in range(1, 3):
+                                        option_para_comprar = input("Ingreso Invalido. Que desea realizar? \n 1. Agregar productos a la cuenta \n 2. Salir \n --> ")
+                                    if option_para_comprar == "1":
+                                        print()
+                                        print(f"--- MENU {restaurante_selected.nombre} ---")
+                                        print()
+                                        for producto in restaurante_selected.productos:
+                                            producto.show_sin_iva()
+                                            lista_nombre_productos.append(producto.nombre)
+                                            print()
+                                        while True:
+                                            agregar_producto = input("Ingrese el nombre del producto que desea comprar, tal cual como aparece en el menu \n --> ")
+                                            agregar_producto_list = agregar_producto.split(" ")
+                                            agregar_producto_junto = "".join(agregar_producto_list)
+                                            while not agregar_producto_junto.isalpha() or not agregar_producto in lista_nombre_productos:
+                                                agregar_producto = input("Lo sentimos, no se ha podido encontrar el producto seleccionado, porfavor ingrese un alimento del menu \n --> ")
+                                                agregar_producto_list = agregar_producto.split(" ")
+                                                agregar_producto_junto = "".join(agregar_producto_list)
+                                            aux = False
+                                            for producto in restaurante_selected.productos:
+                                                if producto.nombre == agregar_producto and producto.adicional == "alcoholic" and cliente.edad < 18:
+                                                    aux = True
+                                                    print("Usted no puede comprar dicho producto debido a que es menor de edad")
+                                            if aux == False:
+                                                break
+                                        agregar_producto_cantidad = input("Ingrese la cantidad de productos que desea comprar \n --> ")
+                                        while not agregar_producto_cantidad.isnumeric() or not int(agregar_producto_cantidad) < 100:
+                                            agregar_producto_cantidad = input("Ingreso Invalido. Ingrese la cantidad de productos que desea comprar \n --> ")
+                                        agregar_producto_cantidad = int(agregar_producto_cantidad)
+                                        for producto in restaurante_selected.productos:
+                                            if producto.nombre == agregar_producto:
+                                                carrito_dict[producto.nombre] = agregar_producto_cantidad
+                                                cuenta_productos.append(producto)
+                                                break
+                                        if cuenta_dict == []:
+                                            cuenta_dict.append(carrito_dict)
+                                    else:
+                                        if cuenta_dict == []:
+                                            print()
+                                            print("La cuenta esta vacia")
+                                            print()
+                                        else:
+                                            factura_restaurante = FacturaRestaurante(cliente.nombre, cliente.cedula, cliente.edad, cuenta_dict, cuenta_productos)   
+                                            print() 
+                                            factura_restaurante.show()
+                                            print()
+                                            confirm_purschase = input("Desea proceder y continuar con el pago? \n 1. SI \n 2. NO \n --> ")
+                                            while not confirm_purschase.isnumeric() or not int(confirm_purschase) in range (1, 3):
+                                                confirm_purschase = input("Ingreso Invalido. Desea proceder y continuar con el pago? \n 1. SI \n 2. NO \n --> ")
+                                            if confirm_purschase == "1":
+                                                print()
+                                                print(f"{Fore.GREEN} PAGO EXITOSO. SE HA REGISTRADO SU COMPRA")
+                                                print(Style.RESET_ALL)
+                                                tickets_VIP_detectados.remove(ticketVIP)
+                                                cliente.factura_restaurante.append(factura_restaurante)
+                                            else:
+                                                print()
+                                                print(f"{Fore.RED} SE HA CANCELADO SU PAGO")
+                                                print(Style.RESET_ALL)
+                                        break     
+                elif option == "2":     
+                    break
+            
 ## A continuacion se encuentra la funcion main, que la funcionalidad a todo el programa
 def main():
     equipos = get_equipos()
@@ -510,7 +660,7 @@ def main():
                 while not option2.isnumeric() or not int(option2) in range(1, 3):
                      option2 = input("Porfavor seleccione una opcion valida. Que desea realizar? \n 1. Comprar ebtradas \n 2. Salir del modulo \n --> ")
                 if option2 == "1":
-                    cliente = get_client_data(partidos, tickets_ocupados)
+                    cliente = get_client_data(partidos, tickets_ocupados, clientes)
                     if cliente != None:   
                         clientes.append(cliente)
                         for ticket in cliente.tickets_comprados:
@@ -551,9 +701,24 @@ def main():
                     get_restaurantes_segun_estadio(estadios)
                 if option4 == "2":
                     break
-
+        
+        ## MODULO 5
         if option == "5":
-            pass
+            while True:
+                print()
+                print("\N{money with wings} GESTION DE VENTA DE RESTAURANTE \N{money with wings}")
+                print()
+                option5 = input("Que desea realizar? \n 1. Registrar compra de restaurante (solo para clientes con tickets VIP) \n 2. Salir del modulo \n --> ")
+                while not option5.isnumeric() or not int(option5) in range(1, 3):
+                    option5 = input("Ingreso Invalido. Que desea realizar? \n 1. Registrar compra de restaurante (solo para clientes con tickets VIP) \n 2. Salir del modulo \n --> ")
+                if option5 == "1":
+                    if clientes != []:
+                        get_factura_productos(clientes)
+                    else:
+                        print()
+                        print("No hay clientes registrados")
+                if option5 == "2":
+                    break
         if option == "6":
             pass
         if option == "7":
