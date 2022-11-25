@@ -135,15 +135,15 @@ def get_mapa_estadio(x, tickets_ocupados, partido_cliente):
             taken.append(ticket.id_asiento)
 
     asientos_libres = []
-    for a in range(x[0]):
+    for a in range(int(x/10)):
         fila = []
-        for b in range(x[1]):
+        for b in range(10):
             if f"{a}{b}" not in taken:
-                changed_color = (f"{Fore.GREEN} {a}{b}")
+                changed_color = (f"{Fore.GREEN}| {a}{b}")
                 fila.append(changed_color)
                 asientos_libres.append(f"{a}{b}")
             else:
-                changed_color = (f"{Fore.RED} X ")
+                changed_color = (f"|{Fore.RED} X ")
                 fila.append(changed_color)       
         print(" ".join(fila))
         print()
@@ -154,14 +154,15 @@ def get_mapa_estadio(x, tickets_ocupados, partido_cliente):
 def is_numero_vampiro(cedula):
     cedula = str(cedula)
     cont = 0
-    for permutaciones in permutations(cedula):
-        digitos_separados = "".join(permutaciones)
-        primera_parte = digitos_separados[:int(len(digitos_separados)//2)]
-        segunda_parte = digitos_separados[int(len(digitos_separados)//2):]
-        primera_parte = int(primera_parte)
-        segunda_parte = int(segunda_parte)
-        if primera_parte * segunda_parte == int(cedula):
-            cont+=1
+    if len(cedula) != 1:
+        for permutaciones in permutations(cedula):
+            digitos_separados = "".join(permutaciones)
+            primera_parte = digitos_separados[:int(len(digitos_separados)//2)]
+            segunda_parte = digitos_separados[int(len(digitos_separados)//2):]
+            primera_parte = int(primera_parte)
+            segunda_parte = int(segunda_parte)
+            if primera_parte * segunda_parte == int(cedula):
+                cont+=1
     if cont != 0:
         return True
     else:
@@ -193,8 +194,9 @@ def get_total(subtotal, discount, IVA):
     return total
 
 ## La siguiente funcion recolecta datos del cliente
-def get_client_data(partidos, tickets_ocupados, clientes):
+def get_client_data(partidos, tickets_ocupados, tickets_ocupados_general, tickets_ocupados_VIP, clientes):
     lista_cedulas_registradas = []
+
     if clientes != []:
         for cliente in clientes:
             lista_cedulas_registradas.append(cliente.cedula)
@@ -219,6 +221,8 @@ def get_client_data(partidos, tickets_ocupados, clientes):
 
     partidos_comprados = []
     tickets_comprados = []
+    tickets_general_comprados = []
+    tickets_VIP_comprados = []
 
     while True:
         for partido in partidos:
@@ -238,23 +242,51 @@ def get_client_data(partidos, tickets_ocupados, clientes):
         for partido in partidos:
             if partido.id == id_partido:
                 estadio_selected = partido.stadium_id
-                asientos_libre = get_mapa_estadio(estadio_selected.capacidad, tickets_ocupados, partido_cliente)
+                if option_ticket_cliente == "1":
+                    asientos_libres_general = get_mapa_estadio(estadio_selected.capacidad[0], tickets_ocupados_general, partido_cliente)
+                else:
+                    asientos_libres_VIP = get_mapa_estadio(estadio_selected.capacidad[1], tickets_ocupados_VIP, partido_cliente)
                 break
-                
-        id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
-        while not id_asiento.isnumeric() or not id_asiento in asientos_libre:
-            id_asiento = input("Porfavor ingrese un asiento libre. Ingrese nuevamente el asiento que desea comprar \n --> ")
         
-        ticket_code = (f"{partido_cliente.home_team.codigo_fifa}-{partido_cliente.away_team.codigo_fifa}-{id_partido}{id_asiento}")
-        
+        if option_ticket_cliente == "1": 
+            if asientos_libres_general != []:      
+                id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
+                while not id_asiento.isnumeric() or not id_asiento in asientos_libres_general:
+                    id_asiento = input("Porfavor ingrese un asiento libre. Ingrese nuevamente el asiento que desea comprar \n --> ")
+            else:
+                print("No hay asientos disponibles, todos estan ocupados")
+                print()
+        else:
+            if asientos_libres_VIP != []:
+                id_asiento = input("Anteriormente se mostro un mapa del estadio, porfavor ingrese el asiento que desea comprar \n --> ")
+                while not id_asiento.isnumeric() or not id_asiento in asientos_libres_VIP:
+                    id_asiento = input("Porfavor ingrese un asiento libre. Ingrese nuevamente el asiento que desea comprar \n --> ")
+            else:
+                print("No hay asientos disponibles, todos estan ocupados")
+                print()
+
+        partidos_comprados.append(partido_cliente)
+
+        if option_ticket_cliente == "1": 
+            ticket_code = (f"{partido_cliente.home_team.codigo_fifa}-{partido_cliente.away_team.codigo_fifa}-G-{id_partido}{id_asiento}") 
+        else:
+            ticket_code = (f"{partido_cliente.home_team.codigo_fifa}-{partido_cliente.away_team.codigo_fifa}-V-{id_partido}{id_asiento}")
+
         if option_ticket_cliente == "1":
             ticket = General(partido_cliente, id_asiento, ticket_code)
         else:
             ticket = Vip(partido_cliente, id_asiento, ticket_code)
 
-        partidos_comprados.append(partido_cliente)
-        tickets_comprados.append(ticket)
-        tickets_ocupados.append(ticket)
+        if option_ticket_cliente == "1":  
+            tickets_ocupados.append(ticket)
+            tickets_comprados.append(ticket)
+            tickets_ocupados_general.append(ticket)
+            tickets_general_comprados.append(ticket)
+        else:
+            tickets_ocupados.append(ticket)
+            tickets_comprados.append(ticket)
+            tickets_ocupados_VIP.append(ticket)
+            tickets_VIP_comprados.append(ticket)
         
         keep_adding = input("Que desea realizar? \n 1. Comprar otro ticket \n 2. Salir \n --> ")
         while not keep_adding.isnumeric() or not int(keep_adding) in range(1, 3):
@@ -276,16 +308,22 @@ def get_client_data(partidos, tickets_ocupados, clientes):
                 print(f"{Fore.GREEN} Compra realizada exitosamente")
                 print(Style.RESET_ALL)
                 cliente = Cliente(nombre_cliente, cedula_cliente, edad_cliente, partidos_comprados, tickets_comprados, factura_ticket)
+                for ticket in cliente.tickets_comprados:
+                    ticket.partido_cliente.ventas += 1
                 return cliente
             else:
                 for ticket_in_for in tickets_comprados:
                     tickets_ocupados.remove(ticket_in_for)
+                for ticketV in tickets_VIP_comprados:
+                    tickets_ocupados_VIP.remove(ticketV)
+                for ticketG in tickets_general_comprados:
+                    tickets_ocupados_general.remove(ticketG)
                 print(f"{Fore.RED} Se ha cancelado su compra") 
                 print(Style.RESET_ALL)
             break
 
 ## A continuacion se encuentra la funcion para validar la autenticidad de los boletos comprados
-def get_validation_ticket(clientes):
+def get_validation_ticket(clientes, tickets_validados):
     if clientes != []: 
         nombre_cliente_validation = input("Porfavor ingrese el nombre al que esta asociado el boleto comprado \n --> ").title()
         while nombre_cliente_validation.isnumeric():
@@ -299,36 +337,65 @@ def get_validation_ticket(clientes):
                 print()
                 print("A continucacion se muestran los tickets comprados a su nombre")
                 print()
-                cliente.factura.show()
+                cliente.factura_tickets.show()
                 print()
-                ticket_code_input = input("Ingrese el codigo de su boleto exactamente como aparece en su factura -> CodigoFifaEquipoLocal-CodigoFifaEquipoVisitante-IdPartidoIdDeSuAsiento --> Ejemplo: BRA-CMR-4811 \n --> ").upper()
-                while not len(ticket_code_input) in range(9, 15) or not ticket_code_input.count("-") == 2:
-                    ticket_code_input = input("Ingreso Invalido. Porfavor ingrese el codigo de su boleto exactamente como aparece en su factura -> CodigoFifaEquipoLocal-CodigoFifaEquipoVisitante-IdPartidoIdDeSuAsiento --> Ejemplo: BRA-CMR-4811 \n --> ").upper()
-                aux2 = False
-                for ticket in cliente.tickets_comprados:
-                    if ticket.ticket_code == ticket_code_input:
-                        aux2 = True
-                        ticket.asistencia = "Si Asistio"
+                ticket_code_input = input("Ingrese el codigo de su boleto exactamente como aparece en su factura -> CodigoFifaEquipoLocal-CodigoFifaEquipoVisitante-TipoDeEntrada-IdPartidoIdDeSuAsiento --> Ejemplo: BRA-CMR-G-4811 \n --> ").upper()
+                while not len(ticket_code_input) in range(11, 15) or not ticket_code_input.count("-") == 3:
+                    ticket_code_input = input("Ingreso Invalido. Porfavor ingrese el codigo de su boleto exactamente como aparece en su factura -> CodigoFifaEquipoLocal-CodigoFifaEquipoVisitante-TipoDeEntrada-IdPartidoIdDeSuAsiento --> Ejemplo: BRA-CMR-G-4811 \n --> ").upper()
+                
+                if tickets_validados != []:
+                    for ticket in tickets_validados:
+                        if ticket.ticket_code == ticket_code_input:
+                            print()
+                            print(f"{Fore.RED} EL ticket ya fue validado anteriormente")
+                            print(Style.RESET_ALL)
+                            return None, None
+                        else:
+                            aux2 = False
+                            for ticket in cliente.tickets_comprados:
+                                if ticket.ticket_code == ticket_code_input:
+                                    aux2 = True
+                                    ticket.asistencia = "Si Asistio"
+                                    print()
+                                    print(f"{Fore.GREEN} BOLETO VALIDADO CON EXITO, BIENVENIDO A SU PARTIDO")
+                                    print(Style.RESET_ALL)
+                                    ticket.partido_cliente.asistencias += 1
+                                    return cliente, ticket
+                            if aux2 == False:
+                                print()
+                                print(f"{Fore.RED} NO SE HA PODIDO VALIDAR SU BOLETO DEBIDO A UN ERROR DESCONOCIDO. PORFAVOR INTENTE NUEVAMENTE")
+                                print(Style.RESET_ALL)
+                                return None, None
+                else:
+                    aux2 = False
+                    for ticket in cliente.tickets_comprados:
+                        if ticket.ticket_code == ticket_code_input:
+                            aux2 = True
+                            ticket.asistencia = "Si Asistio"
+                            print()
+                            print(f"{Fore.GREEN} BOLETO VALIDADO CON EXITO, BIENVENIDO A SU PARTIDO")
+                            print(Style.RESET_ALL)
+                            ticket.partido_cliente.asistencias += 1
+                            return cliente, ticket
+                    if aux2 == False:
                         print()
-                        print(f"{Fore.GREEN} BOLETO VALIDADO CON EXITO, BIENVENIDO A SU PARTIDO")
+                        print(f"{Fore.RED} NO SE HA PODIDO VALIDAR SU BOLETO DEBIDO A UN ERROR DESCONOCIDO. PORFAVOR INTENTE NUEVAMENTE")
                         print(Style.RESET_ALL)
-                        return cliente
-                if aux2 == False:
-                    print()
-                    print(f"{Fore.RED} NO SE HA PODIDO VALIDAR SU BOLETO DEBIDO A UN ERROR DESCONOCIDO. PORFAVOR INTENTE NUEVAMENTE")
-                    print(Style.RESET_ALL)
+                        return None, None
         if aux1 == False:
             print(f"{Fore.RED} No hay clientes asociados al nombre indicado anteriormente")
             print(Style.RESET_ALL)
+            return None, None
     else:
         print("No hay clientes registrados en el sistema")
+        return None, None
 
 ## A continuacion se encuentra la funcion para validar la autenticidad de los boletos comprados manualmente
-def get_manual_validation_ticket(clientes):
+def get_manual_validation_ticket(clientes, tickets_validados):
     if clientes != []:
         nombre_cliente_validation = input("Porfavor ingrese el nombre al que esta asociado el boleto comprado \n --> ").title()
         while nombre_cliente_validation.isnumeric():
-            nombre_cliente_validation = input("Ingreso Invalido. Porfavor ingrese el nombre al que esta asociado el boleto comprado \ n --> ").title()
+            nombre_cliente_validation = input("Ingreso Invalido. Porfavor ingrese el nombre al que esta asociado el boleto comprado \n --> ").title()
         
         aux1 = False
         for cliente in clientes:
@@ -339,7 +406,7 @@ def get_manual_validation_ticket(clientes):
                 print("A continucacion se muestran los tickets comprados a su nombre")
                 print()
 
-                cliente.factura.show()
+                cliente.factura_tickets.show()
                 print()
                 id_partido_manual_validation = input("Ingrese el id del partido que compro el ticket \n --> ")
                 while not id_partido_manual_validation.isnumeric() or not int(id_partido_manual_validation) in range(1, 49):
@@ -352,21 +419,33 @@ def get_manual_validation_ticket(clientes):
                 aux2 = False
                 for ticket in cliente.tickets_comprados:
                     if ticket.partido_cliente.id == id_partido_manual_validation and ticket.id_asiento == id_asiento_validation:
-                        aux2 = True
-                        ticket.asistencia = "Si asistio"
-                        print()
-                        print(f"{Fore.GREEN} BOLETO VALIDADO CON EXITO, BIENVENIDO A SU PARTIDO")
-                        print(Style.RESET_ALL)
-                        return cliente
+                        for ticket_validado in tickets_validados:
+                            if ticket_validado.ticket_code != ticket.ticket_code:
+                                aux2 = True
+                                ticket.asistencia = "Si asistio"
+                                print()
+                                print(f"{Fore.GREEN} BOLETO VALIDADO CON EXITO, BIENVENIDO A SU PARTIDO")
+                                print(Style.RESET_ALL)
+                                tickets_validados.append(ticket)
+                                ticket.partido_cliente.asistencias += 1
+                                return cliente, ticket
+                            else:
+                                print()
+                                print(f"{Fore.RED} EL ticket ya fue validado anteriormente")
+                                print(Style.RESET_ALL)
+                                return None, None
                 if aux2 == False:
                     print()
                     print(f"{Fore.RED} NO SE HA PODIDO VALIDAR SU BOLETO DEBIDO A UN ERROR DESCONOCIDO. PORFAVOR INTENTE NUEVAMENTE")
                     print(Style.RESET_ALL)
+                    return None, None
         if aux1 == False:
             print(f"{Fore.RED} No hay clientes asociados al nombre indicado anteriormente")
             print(Style.RESET_ALL)
+            return None, None
     else:
         print("No hay clientes registrados en el sistema")
+        return None, None
 
 ## A continuacion se encuentra la funcion para observar los menus de los distintos restaurantes
 def get_restaurantes_segun_estadio(estadios):
@@ -478,11 +557,6 @@ def get_restaurantes_segun_estadio(estadios):
 ## A continuacion se encuentra la funcion para detectar si un cliente tiene acceso al restaurante, y que desea comprar
 def get_factura_productos(clientes):
     tickets_VIP_detectados = []
-    #lista_id_partidos_for_validation = []
-    #lista_nombre_productos = []
-    #carrito_dict = {}
-    #cuenta_productos = []
-    #cuenta_dict = []
     cedula = input("Porfavor ingrese la cedula registrada en el sistema al comprar los tickets \n --> ")
     while not cedula.isnumeric():
         cedula = input("Ingreso Invalido. Porfavor ingrese la cedula registrada en el sistema al comprar los tickets \n --> ")
@@ -502,7 +576,8 @@ def get_factura_productos(clientes):
                                 tickets_VIP_detectados.append(ticket)
         if aux == False:
             print()
-            print("Lo sentimos, usted no tiene acceso al restaurante debido a que ninguna de sus entradas compradas es VIP")
+            print(f"{Fore.RED} Lo sentimos, usted no tiene acceso al restaurante debido a que ninguna de sus entradas compradas es VIP o la cedula introducida no pertenece a ningun cliente")
+            print(Style.RESET_ALL)
         if aux == True:
             while True:
                 lista_id_partidos_for_validation = []
@@ -607,7 +682,60 @@ def get_factura_productos(clientes):
                                         break     
                 elif option == "2":     
                     break
-            
+
+## A continuacion se encuentra la funcion para sacar el promedio de gasto de un cliente VIP en un partido
+def get_promedio_gasto_VIP(clientes):
+    clientes_VIP = []
+    monto_total = 0
+    for cliente in clientes:
+        for ticket in cliente.tickets_comprados:
+            if ticket.tipo_entrada == "VIP":
+                clientes_VIP.append(cliente)
+                break
+    
+    for cliente in clientes_VIP:
+        monto_total += cliente.factura_tickets.total
+        if cliente.factura_restaurante == []:
+            monto_total += 0 
+        else:
+            for factura in cliente.factura_restaurante:
+                monto_total += factura.total
+    if clientes_VIP != []:
+        promedio_de_gasto = round(monto_total / len(clientes_VIP), 2)
+        return promedio_de_gasto
+    else:
+        print("No hay clientes VIP registrados en el sistema")
+
+## A continuacion se encuentra la funcion para desplegar la asistencia de los partidos
+def get_asistencia_partidos(partidos):
+    partidos_ordenados = sorted(partidos, key = lambda x: x.asistencias, reverse=True)
+    for partido in partidos_ordenados:
+        partido.show_stadistics()
+
+## A continuacion se encuentra la funcion para seleccionar el partido con mayor asistencia
+def get_partido_mayor_asistencia(partidos):
+    partidos_ordenados = sorted(partidos, key=lambda x: x.asistencias, reverse= True)
+    return partidos_ordenados[0]
+
+## A continuacion se encuentra la funcion para seleccionar el partido con mayor ventas
+def get_partido_mayor_ventas(partidos):
+    partidos_ordenados = sorted(partidos, key=lambda x: x.ventas, reverse=True)
+    return partidos_ordenados[0]
+
+## A continuacion se encuentra la funcion para conocer el top 3 de los productos mas vendidos en cada restaurante
+def get_top_restaurant_products():
+    pass
+
+## A continuacion se encuentra la funcion para conocer el top 3 de los clientes que mas compraron entradas
+def get_most_tickets_clients(clientes):
+    clientes_ordenados = sorted(clientes, key = lambda x: len(x.tickets_comprados), reverse=True)
+    top1_cliente = clientes_ordenados[0]
+    top2_cliente = clientes_ordenados[1]
+    top3_cliente = clientes_ordenados[2]
+    top1_cliente.show()
+    top2_cliente.show()
+    top3_cliente.show()
+
 ## A continuacion se encuentra la funcion main, que la funcionalidad a todo el programa
 def main():
     equipos = get_equipos()
@@ -615,7 +743,10 @@ def main():
     partidos = get_partidos(equipos, estadios)
     clientes = []
     tickets_ocupados = []
+    tickets_ocupados_general = []
+    tickets_ocupados_VIP = []
     clientes_con_tickets_validados = []
+    tickets_validados = []
     while True:
         print()
         print("\N{soccer ball} BIENVENIDO AL SISTEMA DEL MUNDIAL DE FUTBOL QATAR 2022 \N{soccer ball}")
@@ -660,11 +791,16 @@ def main():
                 while not option2.isnumeric() or not int(option2) in range(1, 3):
                      option2 = input("Porfavor seleccione una opcion valida. Que desea realizar? \n 1. Comprar ebtradas \n 2. Salir del modulo \n --> ")
                 if option2 == "1":
-                    cliente = get_client_data(partidos, tickets_ocupados, clientes)
+                    cliente = get_client_data(partidos, tickets_ocupados, tickets_ocupados_general, tickets_ocupados_VIP, clientes)
                     if cliente != None:   
                         clientes.append(cliente)
                         for ticket in cliente.tickets_comprados:
-                            tickets_ocupados.append(ticket)  
+                            if ticket.tipo_entrada == "General":
+                                tickets_ocupados_general.append(ticket)
+                                tickets_ocupados.append(ticket) 
+                            else:
+                                tickets_ocupados_VIP.append(ticket)
+                                tickets_ocupados.append(ticket)      
                 else:
                     break   
         
@@ -678,13 +814,15 @@ def main():
                 if option3 == "1":
                     sub_option3 = input("Como desea validar su boleto? \n 1. Utilizando el codigo unico \n 2. Realizarlo manualmente \n --> ")
                     if sub_option3 == "1":
-                        cliente_validado = get_validation_ticket(clientes)
-                        if cliente_validado != None:
+                        cliente_validado, ticket_validado = get_validation_ticket(clientes, tickets_validados)
+                        if cliente_validado != None and ticket_validado != None:
                             clientes_con_tickets_validados.append(cliente_validado)
+                            tickets_validados.append(ticket_validado)
                     elif sub_option3 == "2":
-                        cliente_validado_manual = get_manual_validation_ticket(clientes)
+                        cliente_validado_manual = get_manual_validation_ticket(clientes, tickets_validados)
                         if cliente_validado_manual != None:
                             clientes_con_tickets_validados.append(cliente_validado_manual)
+                            tickets_validados.append(tickets_validados)
                 if option3 == "2":
                     break
         
@@ -719,8 +857,45 @@ def main():
                         print("No hay clientes registrados")
                 if option5 == "2":
                     break
+        
+        ## MODULO 6
         if option == "6":
-            pass
+            while True:
+                print()
+                print("\N{bar chart} INDICADORES DE GESTION (ESTADISTICAS) \N{bar chart}")
+                print()
+                option7 = input("Que estadistica desea visualizar? \n 1. Promedio de gasto de un cliente VIP \n 2. Asistencia a los partidos \n 3. Partido con mayor asistencia \n 4. Partido con mayor boletos vendidos \n 5. Top 3 productos mas vendidos en el restaurante \n 6. Top 3 de clientes que mas compraron boletos \n 7. Mostrar graficos \n 8. Salir del modulo \n --> ")
+                while not option.isnumeric() or not int(option7) in range(1, 9):
+                    option7 = input("Ingreso Invalido. Que estadistica desea visualizar? \n 1. Promedio de gasto de un cliente VIP \n 2. Asistencia a los partidos \n 3. Partido con mayor asistencia \n 4. Partido con mayor boletos vendidos \n 5. Top 3 productos mas vendidos en el restaurante \n 6. Top 3 de clientes que mas compraron boletos \n 7. Mostrar graficos \n 8. Salir del modulo \n --> ")
+                if option7 == "1":
+                    promedio_gasto = get_promedio_gasto_VIP(clientes)
+                    if promedio_gasto != None:
+                        print()
+                        print(f"El promedio de gasto de un cliente VIP es --> {promedio_gasto}$")
+                        print()
+                elif option7 == "2":
+                    print("--- TABLA DE ASISTENCIA DE PARTIDOS ---")
+                    print()
+                    get_asistencia_partidos(partidos)
+                elif option7 == "3":
+                    print("--- PARTIDO CON MAYOR ASISTENCIA ---")
+                    print()
+                    partido_mas_asistido = get_partido_mayor_asistencia(partidos)
+                    partido_mas_asistido.show_stadistics()
+                elif option7 == "4":
+                    print("--- PARTIDO CON MAYOR VENTAS ---")
+                    print()
+                    partido_mas_vendido = get_partido_mayor_ventas(partidos)
+                    partido_mas_vendido.show_stadistics()
+                elif option7 == "5":
+                    pass
+                elif option7 == "6":
+                    print("---TOP 3 CLIENTES CON MAS TICKETS COMPRADOS---")
+                    get_most_tickets_clients(clientes)
+                elif option7 == "7":
+                    pass
+                elif option7 == "8":
+                    break
         if option == "7":
             break
 main()

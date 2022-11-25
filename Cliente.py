@@ -7,3 +7,11 @@ class Cliente():
         self.tickets_comprados = tickets_comprados
         self.factura_tickets = factura_tickets
         self.factura_restaurante = []
+    
+    def show(self):
+        print()
+        print("---CLIENTE---")
+        print(f"Nombre -> {self.nombre}")
+        print(f"Cedula -> {self.cedula}")
+        print(f"Edad -> {self.edad}")
+        print(f"Cantidad de entradas compradas -> {len(self.tickets_comprados)}")
