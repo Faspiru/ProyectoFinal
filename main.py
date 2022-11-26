@@ -139,11 +139,11 @@ def get_mapa_estadio(x, tickets_ocupados, partido_cliente):
         fila = []
         for b in range(10):
             if f"{a}{b}" not in taken:
-                changed_color = (f"{Fore.GREEN}| {a}{b}")
+                changed_color = (f"{Fore.BLUE}|{Fore.GREEN} {a}{b}")
                 fila.append(changed_color)
                 asientos_libres.append(f"{a}{b}")
             else:
-                changed_color = (f"|{Fore.RED} X ")
+                changed_color = (f"{Fore.BLUE}|{Fore.RED} XX")
                 fila.append(changed_color)       
         print(" ".join(fila))
         print()
