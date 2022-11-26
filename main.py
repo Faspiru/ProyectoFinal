@@ -1,4 +1,5 @@
 import requests
+import matplotlib.pyplot as plt
 from itertools import permutations
 from colorama import *
 from Equipo import Equipo
@@ -795,6 +796,99 @@ def get_most_tickets_clients(clientes):
         for cliente in clientes_ordenados:
             cliente.show()
 
+## A continuacion se muestra la funcion para obtener el grafico de la estadistica numero 1 en el apartado de estadisticas
+def get_grafico_asistencia(partidos):
+    ejeX = []
+    ejeY = []
+    for partido in partidos:
+        ejeX.append(partido.id)
+        ejeY.append(partido.asistencias)
+
+    fig, ax = plt.subplots() 
+    ax.plot(ejeX, ejeY, color = "tab:olive", marker = "o")
+    ax.set_title("ASISTENCIA DE PARTIDOS", loc = "center", fontdict= {"fontsize": 18, "fontweight":"bold", "color" : "tab:olive"})
+    ax.set_xlabel("Id Del Partido", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    ax.set_ylabel("Asistencia", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    fig.set_size_inches(16, 5)
+    plt.show()
+
+## A continuacion se muestra la funcion para obtener el grafico de la estadistica numero 2 en el apartado de estadisticas
+def get_grafico_ventas(partidos):
+    ejeX = []
+    ejeY = []
+    for partido in partidos:
+        ejeX.append(partido.id)
+        ejeY.append(partido.ventas)
+
+    fig, ax = plt.subplots()
+    ax.plot(ejeX, ejeY, color = "tab:olive", marker = "o")
+    ax.set_title("VENTAS DE LOS PARTIDOS", loc = "center", fontdict= {"fontsize": 18, "fontweight":"bold", "color" : "tab:olive"})
+    ax.set_xlabel("Id Del Partido", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    ax.set_ylabel("Ventas", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    fig.set_size_inches(16, 5)
+    plt.show()
+
+## A continuacion se encuentra la funcion para generar el grafico de la estadistica numero 3 en el apartado de las estadisticas
+def get_grafico_top_productos(estadios):
+    option = input("Ingrese el id del restaurante sobre el cual desea conocer el top de productos mas vendidos \n 1. Al Bayt Restaurant \n 2. Lusail Restaurant \n 3. The emir Restaurant \n 4. Ahmad Bin Ali Restaurant \n 5. Al Janoub Restaurant \n 6. Al Thumama Restaurant \n 7. Education City Restaurant \n 8. Khalifa International Restaurant \n 9. 974 Restaurant \n --> ")
+    while not option.isnumeric() or not int(option) in range(1, 9):
+        option = option = input("Ingreso Invalido. Ingrese el id del restaurante sobre el cual desea conocer el top de productos mas vendidos \n 1. Al Bayt Restaurant \n 2. Lusail Restaurant \n 3. The emir Restaurant \n 4. Ahmad Bin Ali Restaurant \n 5. Al Janoub Restaurant \n 6. Al Thumama Restaurant \n 7. Education City Restaurant \n 8. Khalifa International Restaurant \n 9. 974 Restaurant \n --> ")
+    if option == "1":
+        option = "Al Bayt Restaurant"
+    elif option == "2":
+        option = "Lusail Restaurant"
+    elif option == "3":
+        option = "The emir Restaurant"
+    elif option == "4":
+        option = "Ahmad Bin Ali Restaurant"
+    elif option == "5":
+        option = "Al Janoub Restaurant"
+    elif option == "6":
+        option = "Al Thumama Restaurant"
+    elif option == "7":
+        option = "Education City Restaurant"
+    elif option == "8":
+        option = "Khalifa International Restaurant"
+    elif option == "9":
+        option = "974 Restaurant"
+    
+    for estadio in estadios:
+        for restaurante in estadio.restaurantes:
+            if restaurante.nombre == option:
+                productos_ordenados = sorted(restaurante.productos, key = lambda x: x.inventario)
+                break
+
+    fig, ax = plt.subplots()
+    ejeX = [productos_ordenados[0].nombre, productos_ordenados[1].nombre, productos_ordenados[2].nombre]
+    ejeY = [25-(productos_ordenados[0].inventario), 25-(productos_ordenados[1].inventario), 25-(productos_ordenados[2].inventario)]
+    ax.plot(ejeX, ejeY, color = "tab:olive", marker = "o")
+    ax.set_title(f"TOP 3 PRODUCTOS MAS VENDIDOS EN {option.upper()}", loc = "center", fontdict= {"fontsize": 18, "fontweight":"bold", "color" : "tab:olive"})
+    ax.set_xlabel("Id Del Partido", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    ax.set_ylabel("Ventas", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    fig.set_size_inches(10, 5)
+    plt.show()
+
+## A continuacion se muestra la funcion para obtener el grafico de la estadistica numero 4 en el apartado de estadisticas
+def get_grafico_top_clientes(clientes):
+    clientes_ordenados = sorted(clientes, key = lambda x: len(x.tickets_comprados), reverse=True)
+    ejeX = []
+    ejeY = []
+    if len(clientes) >= 3:
+        ejeX = [clientes_ordenados[0].nombre, clientes_ordenados[1].nombre, clientes_ordenados[2].nombre]
+        ejeY = [len(clientes_ordenados[0].tickets_comprados), len(clientes_ordenados[1].tickets_comprados), len(clientes_ordenados[2].tickets_comprados)]
+    else:
+        ejeX = clientes_ordenados
+        for cliente in clientes_ordenados:
+            ejeY.append(len(cliente.tickets_comprados))
+
+    fig, ax = plt.subplots()
+    ax.plot(ejeX, ejeY, color = "tab:olive", marker = "o")
+    ax.set_title(f"TOP 3 CLIENTES CON MAS TICKETS COMPRADOS", loc = "center", fontdict= {"fontsize": 18, "fontweight":"bold", "color" : "tab:olive"})
+    ax.set_xlabel("Clientes", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    ax.set_ylabel("Ventas", fontdict = {'fontsize':12, 'fontweight':'bold', 'color':'tab:olive'})
+    fig.set_size_inches(10, 5)
+    plt.show()
+    
 ## A continuacion se encuentra la funcion main, que la funcionalidad a todo el programa
 def main():
     equipos = get_equipos()
@@ -953,7 +1047,23 @@ def main():
                     print("---TOP 3 CLIENTES CON MAS TICKETS COMPRADOS---")
                     get_most_tickets_clients(clientes)
                 elif option7 == "7":
-                    pass
+                    while True:
+                        print()
+                        print("\N{bar chart} GRAFICOS DE LAS ESTADISTICAS \N{bar chart}")
+                        print()
+                        suboption7 = input("Que grafico desea visualizar? \n 1. Asistencia de partidos \n 2. Tickets vendidos \n 3. Top 3 productos mas vendidos en cada restaurante \n 4. Top 3 clientes que mas compraron tickets \n 5. Salir del modulo \n --> ")
+                        while not suboption7.isnumeric() or not int(suboption7) in range (1, 6):
+                            suboption7 = input("Ingreso Invalido. Que grafico desea visualizar? \n 1. Asistencia de partidos \n 2. Tickets vendidos \n 3. Top 3 productos mas vendidos en cada restaurante \n 4, Top 3 clientes que mas compraron tickets \n 5. Salir del modulo \n --> ")
+                        if suboption7 == "1":
+                            get_grafico_asistencia(partidos)
+                        elif suboption7 == "2":
+                            get_grafico_ventas(partidos)
+                        elif suboption7 == "3":
+                            get_grafico_top_productos(estadios)
+                        elif suboption7 == "4":
+                            get_grafico_top_clientes(clientes)
+                        elif suboption7 == "5":
+                            break
                 elif option7 == "8":
                     break
         if option == "7":
