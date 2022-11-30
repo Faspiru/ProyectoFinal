@@ -457,7 +457,6 @@ def get_manual_validation_ticket(clientes, tickets_validados, partidos):
                             print()
                             print(f"{Fore.GREEN} BOLETO VALIDADO CON EXITO, BIENVENIDO A SU PARTIDO")
                             print(Style.RESET_ALL)
-                            #tickets_validados.append(ticket)
                             for partido in partidos:
                                 if partido.id == ticket.partido_cliente.id:
                                     partido.asistencias += 1
@@ -679,7 +678,6 @@ def get_factura_productos(clientes, partidos):
                                                                         print()
                                                                     else:
                                                                         producto.inventario -= agregar_producto_cantidad
-                                                                        print(producto.inventario)
                                                                         if carrito_dict == {}:
                                                                             carrito_dict[producto.nombre] = agregar_producto_cantidad
                                                                         else:
