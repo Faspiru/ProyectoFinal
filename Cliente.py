@@ -7,6 +7,7 @@ class Cliente():
         self.tickets_comprados = tickets_comprados
         self.factura_tickets = factura_tickets
         self.factura_restaurante = []
+        self.tickets_VIP_detectados = []
     
     def show(self):
         print()
