@@ -1157,10 +1157,8 @@ def main():
             with open("tickets_validados.txt", "wb") as w:
                 tickets_validados = pickle.dump(tickets_validados, w)
             break
-main()
-
-#try:
-    #main()
-#except:
-    #print(f"{Fore.RED} LO SENTIMOS, HA OCURRIDO UN ERROR DESCONOCIDO")
-    #print(Style.RESET_ALL)
+try:
+    main()
+except:
+    print(f"{Fore.RED} LO SENTIMOS, HA OCURRIDO UN ERROR DESCONOCIDO")
+    print(Style.RESET_ALL)
